@@ -2,6 +2,9 @@ package lexer
 
 import "monkey/token"
 
+// TODO 1. 如何支持 += -= *= ？
+
+// NextToken token解析 词法分析
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 
@@ -14,14 +17,28 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.RPAREN, l.ch)
 	case ',':
 		tok = newToken(token.COMMA, l.ch)
-	case '=':
-		tok = newToken(token.ASSIGN, l.ch)
+	case '=': // 支持 ==
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.EQ, Literal: literal}
+		} else {
+			tok = newToken(token.ASSIGN, l.ch)
+		}
 	case '+':
 		tok = newToken(token.PLUS, l.ch)
 	case '-':
 		tok = newToken(token.MINUS, l.ch)
-	case '!':
-		tok = newToken(token.BANG, l.ch)
+	case '!': // 支持 !=
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.NOT_EQ, Literal: literal}
+		} else {
+			tok = newToken(token.BANG, l.ch)
+		}
 	case '/':
 		tok = newToken(token.SLASH, l.ch)
 	case '*':
