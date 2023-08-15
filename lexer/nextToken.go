@@ -4,7 +4,7 @@ import "monkey/token"
 
 // TODO 1. 如何支持 += -= *= ？
 
-// NextToken token解析 词法分析
+// NextToken token解析 词法分析 构建下一个token
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 	l.skipWhiteSpace()
