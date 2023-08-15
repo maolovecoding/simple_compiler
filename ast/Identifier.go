@@ -1,6 +1,8 @@
 package ast
 
-import "monkey/token"
+import (
+	"monkey/token"
+)
 
 // Identifier 标识符
 type Identifier struct {
@@ -11,4 +13,8 @@ type Identifier struct {
 func (i *Identifier) expressionNode() {}
 func (i *Identifier) TokenLiteral() string {
 	return i.Token.Literal
+}
+
+func (i *Identifier) String() string {
+	return i.Value
 }

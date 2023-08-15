@@ -9,10 +9,12 @@ import (
 
 // Parser 语法解析
 type Parser struct {
-	l         *lexer.Lexer // 词法分析
-	curToken  token.Token  // 当前token
-	peekToken token.Token  // 下一个token
-	errors    []string     // 错误
+	l              *lexer.Lexer                      // 词法分析
+	curToken       token.Token                       // 当前token
+	peekToken      token.Token                       // 下一个token
+	errors         []string                          // 错误
+	prefixParseFns map[token.TokenType]prefixParseFn // 解析函数
+	infixParseFns  map[token.TokenType]infixParseFn  // 解析函数
 }
 
 // nextToken 下一个token

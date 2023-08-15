@@ -1,12 +1,17 @@
 package parser
 
-import "monkey/lexer"
+import (
+	"monkey/lexer"
+	"monkey/token"
+)
 
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{
 		l:      l,
 		errors: []string{},
 	}
+	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
+	p.registerPrefix(token.IDENT, p.parseIdentifier)
 	// 读取两个词法单元 设置 curToken & peekToken
 	p.nextToken()
 	p.nextToken()
