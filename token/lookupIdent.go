@@ -4,6 +4,7 @@ package token
 var keywords = map[string]TokenType{
 	"fn":     FUNCTION,
 	"let":    LET,
+	"const":  CONST,
 	"true":   TRUE,
 	"false":  FALSE,
 	"if":     IF,

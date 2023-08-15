@@ -33,6 +33,7 @@ const (
 	// 关键字
 	FUNCTION = "FUNCTION"
 	LET      = "LET"
+	CONST    = "CONST"
 	TRUE     = "TRUE"
 	FALSE    = "FALSE"
 	IF       = "IF"
