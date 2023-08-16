@@ -153,3 +153,12 @@ func (p *Parser) parseInFixExpression(left ast.Expression) ast.Expression {
 	expression.Right = p.parseExpression(precedence)
 	return expression
 }
+
+// parseBoolean 解析布尔表达式
+func (p *Parser) parseBoolean() ast.Expression {
+	boolean := &ast.Boolean{
+		Token: p.curToken,
+		Value: p.curTokenIs(token.TRUE),
+	}
+	return boolean
+}
