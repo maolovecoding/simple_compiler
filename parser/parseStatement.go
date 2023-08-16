@@ -162,3 +162,13 @@ func (p *Parser) parseBoolean() ast.Expression {
 	}
 	return boolean
 }
+
+// parseGroupedExpression 分组表达式
+func (p *Parser) parseGroupedExpression() ast.Expression {
+	p.nextToken()
+	exp := p.parseExpression(LOWEST)
+	if !p.expectPeek(token.RPAREN) { // TODO 不是右括号 语法错误
+		return nil
+	}
+	return exp
+}

@@ -19,6 +19,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.TRUE, p.parseBoolean)  // 解析前缀表达式 -
 	p.registerPrefix(token.FALSE, p.parseBoolean) // 解析前缀表达式 -
 	// --------------true false------------------
+	p.registerPrefix(token.LPAREN, p.parseGroupedExpression) // 分组表达式 括号提升优先级
 	// ----------------中缀表达式-------------------
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInFixExpression)
