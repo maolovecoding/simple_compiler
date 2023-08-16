@@ -11,7 +11,8 @@ func New(l *lexer.Lexer) *Parser {
 		errors: []string{},
 	}
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
-	p.registerPrefix(token.IDENT, p.parseIdentifier)
+	p.registerPrefix(token.IDENT, p.parseIdentifier)   // 标识符
+	p.registerPrefix(token.INT, p.parseIntegerLiteral) // 解析INT
 	// 读取两个词法单元 设置 curToken & peekToken
 	p.nextToken()
 	p.nextToken()

@@ -6,7 +6,7 @@ func (l *Lexer) readNumber() string {
 	for isDigit(l.ch) {
 		l.readChar()
 	}
-	return l.input[position:l.readPosition]
+	return l.input[position:l.position]
 }
 
 // TODO 1. 只能支持整形 2. 如何支持浮点数？ 3. 如何支持便于记忆的下划线数字？

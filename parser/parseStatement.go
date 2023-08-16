@@ -1,8 +1,10 @@
 package parser
 
 import (
+	"fmt"
 	"monkey/ast"
 	"monkey/token"
+	"strconv"
 )
 
 // parseStatement 解析语句
@@ -101,3 +103,22 @@ func (p *Parser) parseIdentifier() ast.Expression {
 		Value: p.curToken.Literal,
 	}
 }
+
+// parseIntegerLiteral 解析整形字面量
+func (p *Parser) parseIntegerLiteral() ast.Expression {
+	lit := &ast.IntegerLiteral{
+		Token: p.curToken,
+	}
+	// str2int
+	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
+	if err != nil {
+		msg := fmt.Sprintf("could not parse %q as integer", p.curToken.Literal)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	lit.Value = value
+	return lit
+}
+
+// parseInteger 解析整形
+//func (p *Parser) parseInteger() ast.Expression{}
