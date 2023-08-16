@@ -47,3 +47,8 @@ func (p *Parser) peekError(tokenType token.TokenType) {
 	msg := fmt.Sprintf("expected next token to be %s, got %s instead", tokenType, p.peekToken.Type)
 	p.errors = append(p.errors, msg)
 }
+
+func (p *Parser) noPrefixParseFnError(tokenType token.TokenType) {
+	msg := fmt.Sprintf("no prefix parse function for %s found", tokenType)
+	p.errors = append(p.errors, msg)
+}

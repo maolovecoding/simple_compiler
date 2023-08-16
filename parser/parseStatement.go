@@ -90,6 +90,7 @@ precedence int 优先级
 func (p *Parser) parseExpression(precedence int) ast.Expression {
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
+		p.noPrefixParseFnError(p.curToken.Type) // 没有解析函数
 		return nil
 	}
 	leftExp := prefix()
@@ -120,5 +121,13 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 	return lit
 }
 
-// parseInteger 解析整形
-//func (p *Parser) parseInteger() ast.Expression{}
+// parsePrefixExpression 解析前缀表达式  TODO 如何解决 自增自减等情况 ++ --
+func (p *Parser) parsePrefixExpression() ast.Expression {
+	expression := &ast.PrefixExpression{
+		Token:    p.curToken,
+		Operator: p.curToken.Literal,
+	}
+	p.nextToken() // 消费掉前缀
+	expression.Right = p.parseExpression(PREFIX)
+	return expression
+}
