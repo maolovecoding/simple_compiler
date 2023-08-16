@@ -172,3 +172,47 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 	}
 	return exp
 }
+
+// parseIfExpression 解析if表达式  TODO 语法错误
+func (p *Parser) parseIfExpression() ast.Expression {
+	ifExpression := &ast.IfExpression{
+		Token: p.curToken,
+	}
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+	p.nextToken()
+	ifExpression.Condition = p.parseExpression(LOWEST) // 条件表达式
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+	if !p.expectPeek(token.LBRACE) {
+		return nil
+	}
+	ifExpression.Consequence = p.parseBlockStatement()
+	if p.peekTokenIs(token.ELSE) {
+		p.nextToken() // }
+		if !p.expectPeek(token.LBRACE) {
+			return nil
+		}
+		ifExpression.Alternative = p.parseBlockStatement()
+	}
+	return ifExpression
+}
+
+// parseBlockStatement 解析块级语句
+func (p *Parser) parseBlockStatement() *ast.BlockStatement {
+	block := &ast.BlockStatement{
+		Token:      p.curToken, // {
+		Statements: []ast.Statement{},
+	}
+	p.nextToken()
+	for !p.curTokenIs(token.RBRACE) && !p.curTokenIs(token.EOF) {
+		stmt := p.parseStatement()
+		if stmt != nil {
+			block.Statements = append(block.Statements, stmt)
+		}
+		p.nextToken()
+	}
+	return block
+}
