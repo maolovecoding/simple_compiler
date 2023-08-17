@@ -24,6 +24,7 @@ var precedences = map[token.TokenType]int{
 	token.MINUS:    SUM,
 	token.ASTERISK: PRODUCT, // *
 	token.SLASH:    PRODUCT,
+	token.LPAREN:   CALL, // 调用表达式具有最高优先级
 }
 
 // peekPrecedence 查看下一个 运算符token的优先级 没有匹配到就是最低优先级
