@@ -6,13 +6,16 @@ import (
 
 // applyFunction 函数调用
 func applyFunction(fn object.Object, args []object.Object) object.Object {
-	function, ok := fn.(*object.Function)
-	if !ok {
+	switch fn := fn.(type) {
+	case *object.Function:
+		extendsEnv := extendFunctionEnv(fn, args)
+		evaluated := Eval(fn.Body, extendsEnv)
+		return unwrapReturnValue(evaluated)
+	case *object.Builtin:
+		return fn.Fn(args...)
+	default:
 		return newError("not a function: %s", fn.Type())
 	}
-	extendsEnv := extendFunctionEnv(function, args)
-	evaluated := Eval(function.Body, extendsEnv)
-	return unwrapReturnValue(evaluated)
 }
 
 // extendFunctionEnv 根据父env 创建函数自己的env
