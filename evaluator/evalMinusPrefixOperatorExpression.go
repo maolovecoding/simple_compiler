@@ -6,7 +6,7 @@ import "monkey/object"
 func evalMinusPrefixOperatorExpression(right object.Object) object.Object {
 	if right.Type() != object.INTEGER_OBJ {
 		// 非数字
-		return NULL
+		return newError("unknown operator: -%s", right.Type())
 	}
 	// 对数字取反
 	value := right.(*object.Integer).Value

@@ -1,6 +1,9 @@
 package evaluator
 
-import "monkey/object"
+import (
+	"fmt"
+	"monkey/object"
+)
 
 // isTruthy 对象转为真值
 func isTruthy(obj object.Object) bool {
@@ -14,4 +17,16 @@ func isTruthy(obj object.Object) bool {
 	default:
 		return true
 	}
+}
+
+// newError 创建错误对象
+func newError(format string, a ...interface{}) *object.Error {
+	return &object.Error{Message: fmt.Sprintf(format, a...)}
+}
+
+func isError(obj object.Object) bool {
+	if obj != nil {
+		return obj.Type() == object.ERROR_OBJ
+	}
+	return false
 }
