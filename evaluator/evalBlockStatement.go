@@ -6,10 +6,10 @@ import (
 )
 
 // evalBlockStatement 语句块求值
-func evalBlockStatement(block *ast.BlockStatement) object.Object {
+func evalBlockStatement(block *ast.BlockStatement, env *object.Environment) object.Object {
 	var result object.Object
 	for _, statement := range block.Statements {
-		result = Eval(statement)
+		result = Eval(statement, env)
 		// 发现return语句了 这里不解包 冒泡给 evalProgram 解包
 		if result != nil {
 			rt := result.Type()
