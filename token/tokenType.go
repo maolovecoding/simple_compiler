@@ -10,8 +10,9 @@ const (
 	// 文件结尾
 	EOF = "EOF"
 	// 标识符
-	IDENT = "IDENT"
-	INT   = "INT"
+	IDENT  = "IDENT"
+	INT    = "INT"
+	STRING = "STRING"
 	//	运算符
 	ASSIGN   = "="
 	PLUS     = "+"

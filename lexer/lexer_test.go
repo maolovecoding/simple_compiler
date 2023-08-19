@@ -17,6 +17,8 @@ let add = fn(x, y) {
 };
 
 let result = add(five, ten);
+"foobar"
+"foo bar"
  `
 
 	tests := []struct {
@@ -59,6 +61,8 @@ let result = add(five, ten);
 		{token.IDENT, "ten"},
 		{token.RPAREN, ")"},
 		{token.SEMICOLON, ";"},
+		{token.STRING, "foobar"},
+		{token.STRING, "foo bar"},
 		{token.EOF, ""},
 	}
 

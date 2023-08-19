@@ -51,6 +51,9 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.LBRACE, l.ch)
 	case '}':
 		tok = newToken(token.RBRACE, l.ch)
+	case '"':
+		tok.Type = token.STRING
+		tok.Literal = l.readString()
 	case 0: // 文件结束 未读取到内容
 		tok.Literal = ""
 		tok.Type = token.EOF
