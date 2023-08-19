@@ -9,6 +9,7 @@ const (
 	NULL_OBJ         = "NULL"
 	RERURN_VALUE_OBJ = "RETURN_VALUE"
 	ERROR_OBJ        = "ERROR"
+	FUNCTION_OBJ     = "FUNCTION"
 )
 
 // Object 对象接口 每个不同类型的值都有自己的表示对象形式
