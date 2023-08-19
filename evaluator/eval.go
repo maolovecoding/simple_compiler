@@ -10,7 +10,7 @@ func Eval(node ast.Node) object.Object {
 	// 状态机 + 递归  根据 ast求值为object表示形式
 	switch node := node.(type) {
 	case *ast.Program:
-		return evalStatements(node.Statements)
+		return evalProgram(node)
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression)
 	case *ast.PrefixExpression:
@@ -21,7 +21,10 @@ func Eval(node ast.Node) object.Object {
 		right := Eval(node.Right)
 		return evalInfixExpression(node.Operator, left, right)
 	case *ast.BlockStatement:
-		return evalStatements(node.Statements)
+		return evalBlockStatement(node)
+	case *ast.ReturnStatement:
+		val := Eval(node.ReturnValue)
+		return &object.ReturnValue{Value: val}
 	case *ast.IfExpression:
 		return evalIfExpression(node)
 	case *ast.IntegerLiteral:

@@ -4,9 +4,10 @@ package object
 type ObjectType string
 
 const (
-	INTEGER_OBJ = "INTEGER"
-	BOOLEAN_OBJ = "BOOLEAN"
-	NULL_OBJ    = "NULL"
+	INTEGER_OBJ      = "INTEGER"
+	BOOLEAN_OBJ      = "BOOLEAN"
+	NULL_OBJ         = "NULL"
+	RERURN_VALUE_OBJ = "RETURN_VALUE"
 )
 
 // Object 对象接口 每个不同类型的值都有自己的表示对象形式

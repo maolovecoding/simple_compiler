@@ -8,5 +8,5 @@ func (n *Null) Inspect() string {
 }
 
 func (n *Null) Type() ObjectType {
-	return INTEGER_OBJ
+	return NULL_OBJ
 }
