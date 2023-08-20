@@ -22,7 +22,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression) // 分组表达式 括号提升优先级
 	p.registerPrefix(token.IF, p.parseIfExpression)          // if表达式
 	p.registerPrefix(token.FUNCTION, p.parseFunctionLiteral) // 解析函数字面量
-	p.registerPrefix(token.STRING, p.parseStringLiteral)     // 解析函数字面量
+	p.registerPrefix(token.STRING, p.parseStringLiteral)     // 解析字符串
+	p.registerPrefix(token.LBRACKET, p.parseArrayLiteral)    // 解析数组字面量
 	// ----------------中缀表达式-------------------
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInFixExpression)

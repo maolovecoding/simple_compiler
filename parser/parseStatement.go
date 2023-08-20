@@ -263,11 +263,12 @@ func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 		Token:    p.curToken,
 		Function: function,
 	}
-	exp.Arguments = p.parseCallArguments()
+	//exp.Arguments = p.parseCallArguments()
+	exp.Arguments = p.parseExpressionList(token.RPAREN)
 	return exp
 }
 
-// parseCallArguments 调用表达式参数
+// parseCallArguments 调用表达式参数 TODO 过时 参考  parseExpressionList
 func (p *Parser) parseCallArguments() []ast.Expression {
 	var args []ast.Expression
 	if p.peekTokenIs(token.RPAREN) {
@@ -293,4 +294,31 @@ func (p *Parser) parseStringLiteral() ast.Expression {
 		Token: p.curToken,
 		Value: p.curToken.Literal,
 	}
+}
+
+// parseArrayLiteral 解析数组字面量
+func (p *Parser) parseArrayLiteral() ast.Expression {
+	array := &ast.ArrayLiteral{Token: p.curToken}
+	array.Elements = p.parseExpressionList(token.RBRACKET)
+	return array
+}
+
+// parseExpressionList 解析表达式列表  end表示表达式的列表的结尾
+func (p *Parser) parseExpressionList(end token.TokenType) []ast.Expression {
+	var list []ast.Expression
+	if p.peekTokenIs(end) {
+		p.nextToken()
+		return list
+	}
+	p.nextToken()
+	list = append(list, p.parseExpression(LOWEST))
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+		list = append(list, p.parseExpression(LOWEST))
+	}
+	if !p.expectPeek(end) {
+		return nil
+	}
+	return list
 }
