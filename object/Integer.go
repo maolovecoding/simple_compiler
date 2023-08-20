@@ -1,6 +1,8 @@
 package object
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Integer 整型表示
 type Integer struct {
@@ -13,4 +15,7 @@ func (i *Integer) Inspect() string {
 
 func (i *Integer) Type() ObjectType {
 	return INTEGER_OBJ
+}
+func (i *Integer) HashKey() HashKey {
+	return HashKey{Type: i.Type(), Value: uint64(i.Value)}
 }
