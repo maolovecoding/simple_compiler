@@ -64,7 +64,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.CallExpression:
 		// 跳过参数求值
 		if node.Function.TokenLiteral() == "quote" {
-			return quote(node.Arguments[0]) // quote只能有一个参数
+			return quote(node.Arguments[0], env) // quote只能有一个参数
 		}
 		function := Eval(node.Function, env)
 		if isError(function) {
