@@ -24,6 +24,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.FUNCTION, p.parseFunctionLiteral) // 解析函数字面量
 	p.registerPrefix(token.STRING, p.parseStringLiteral)     // 解析字符串
 	p.registerPrefix(token.LBRACKET, p.parseArrayLiteral)    // 解析数组字面量
+	p.registerPrefix(token.LBRACE, p.parseHashLiteral)       // 解析 hash
 	// ----------------中缀表达式-------------------
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInFixExpression)
