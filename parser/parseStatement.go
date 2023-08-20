@@ -322,3 +322,14 @@ func (p *Parser) parseExpressionList(end token.TokenType) []ast.Expression {
 	}
 	return list
 }
+
+// parseIndexExpression 索引表达式
+func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
+	exp := &ast.IndexExpression{Token: p.curToken, Left: left}
+	p.nextToken()
+	exp.Index = p.parseExpression(LOWEST)
+	if !p.expectPeek(token.RBRACKET) {
+		return nil
+	}
+	return exp
+}

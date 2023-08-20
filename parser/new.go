@@ -35,7 +35,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.LT, p.parseInFixExpression)
 	p.registerInfix(token.GT, p.parseInFixExpression)
 	// ----------------中缀表达式-------------------
-	p.registerInfix(token.LPAREN, p.parseCallExpression) // 调用表达式 (
+	p.registerInfix(token.LPAREN, p.parseCallExpression)    // 调用表达式 (
+	p.registerInfix(token.LBRACKET, p.parseIndexExpression) // 索引表达式 [
 	// 读取两个词法单元 设置 curToken & peekToken
 	p.nextToken()
 	p.nextToken()
