@@ -15,6 +15,7 @@ const (
 	ARRAY_OBJ        = "ARRAY"
 	HASH_OBJ         = "HASH"
 	QUOTE_OBJ        = "QUOTE"
+	MACRO_OBJ        = "MACRO"
 )
 
 // Object 对象接口 每个不同类型的值都有自己的表示对象形式

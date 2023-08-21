@@ -10,6 +10,7 @@ var keywords = map[string]TokenType{
 	"if":     IF,
 	"else":   ELSE,
 	"return": RETURN,
+	"macro":  MACRO,
 }
 
 // LookupIdent 找对应的标识符
