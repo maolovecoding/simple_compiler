@@ -12,7 +12,7 @@ Compiler 编译器
 1. 遍历ast
 2. 找到 *ast.IntegerLiteral
 3. 对其进行求值 并转换为 *object.Integer
-4. 将它们添加到常量字段，最后将 code.OpConstant 指令添加到内部的 code.Instructions 切片
+4. 将它们添加到常量字段，最后将 code.OpConstant 指令添加到内部的 code.Instructions 切片 (压栈)
 */
 type Compiler struct {
 	instructions code.Instructions // 指令集 字节码
