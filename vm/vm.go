@@ -42,6 +42,8 @@ func (vm *VM) Run() error {
 			rightValue := right.(*object.Integer).Value
 			result := leftValue + rightValue
 			vm.push(&object.Integer{Value: result})
+		case code.OpPop:
+			vm.pop()
 		}
 	}
 	return nil
@@ -74,4 +76,10 @@ func (vm *VM) StackTop() object.Object {
 		return nil // 空栈
 	}
 	return vm.stack[vm.sp-1]
+}
+
+// LastPoppedStackElem 测试方法 在 code.OpPop 执行之前 栈顶元素不应该发送改变
+// 因为我们执行了 pop 已经弹栈了 但是我们栈没有清空 这里是为了验证栈顶元素的正确性
+func (vm *VM) LastPoppedStackElem() object.Object {
+	return vm.stack[vm.sp]
 }

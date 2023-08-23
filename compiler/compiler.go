@@ -35,6 +35,8 @@ func (c *Compiler) Compile(node ast.Node) error {
 		if err != nil {
 			return err
 		}
+		// 表达式语句产生的常量其实是临时的 使用完需要弹栈
+		c.emit(code.OpPop) // 添加弹栈指令
 	case *ast.InfixExpression:
 		err := c.Compile(node.Left)
 		if err != nil {
