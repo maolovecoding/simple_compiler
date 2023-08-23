@@ -35,6 +35,13 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return err
 			}
+		case code.OpAdd: // 1 + 2
+			right := vm.pop() // 2
+			left := vm.pop()  // 1
+			leftValue := left.(*object.Integer).Value
+			rightValue := right.(*object.Integer).Value
+			result := leftValue + rightValue
+			vm.push(&object.Integer{Value: result})
 		}
 	}
 	return nil
@@ -48,6 +55,17 @@ func (vm *VM) push(o object.Object) error {
 	vm.stack[vm.sp] = o
 	vm.sp++
 	return nil
+}
+
+/*
+pop 弹栈
+弹栈，其实就是取出栈顶元素，然后栈指针下移（下次入栈覆盖了这些弹出的栈顶元素）
+我们所谓的内存擦除等等操作，其实就是释放内存的使用权，并不是说我们释放内存的时候对内存的数据进行清零操作
+*/
+func (vm *VM) pop() object.Object {
+	o := vm.stack[vm.sp-1]
+	vm.sp--
+	return o
 }
 
 // StackTop 获取栈顶值
