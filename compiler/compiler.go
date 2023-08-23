@@ -49,6 +49,12 @@ func (c *Compiler) Compile(node ast.Node) error {
 		switch node.Operator {
 		case "+":
 			c.emit(code.OpAdd) // 发出指令
+		case "-":
+			c.emit(code.OpSub)
+		case "*":
+			c.emit(code.OpMul)
+		case "/":
+			c.emit(code.OpDiv)
 		default:
 			return fmt.Errorf("unknown operator %s", node.Operator)
 		}
@@ -76,7 +82,7 @@ emit 生成指令并添加到最终结果（添加到文件 内存中某个区�
 
 op code.Opcode 操作码
 
-operands ...int 操作数
+operands ...int 操作数 是地址
 */
 func (c *Compiler) emit(op code.Opcode, operands ...int) int {
 	ins := code.Make(op, operands...)

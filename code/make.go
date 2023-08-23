@@ -6,7 +6,7 @@ import "encoding/binary"
 Make 编译字节码 构建指令
 
 	op 操作码
-	operands 操作数
+	operands 操作数 实际上是操作数在常量池中的索引
 */
 func Make(op Opcode, operands ...int) []byte {
 	def, ok := definitions[op]

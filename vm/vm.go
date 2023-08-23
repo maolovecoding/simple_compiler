@@ -35,18 +35,50 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return err
 			}
-		case code.OpAdd: // 1 + 2
-			right := vm.pop() // 2
-			left := vm.pop()  // 1
-			leftValue := left.(*object.Integer).Value
-			rightValue := right.(*object.Integer).Value
-			result := leftValue + rightValue
-			vm.push(&object.Integer{Value: result})
+		case code.OpAdd, code.OpSub, code.OpMul, code.OpDiv: // 1 + 2
+			err := vm.executeBinaryOperation(op)
+			if err != nil {
+				return nil
+			}
+
 		case code.OpPop:
 			vm.pop()
 		}
 	}
 	return nil
+}
+
+// executeBinaryOperation 二元运算 + - * /
+func (vm *VM) executeBinaryOperation(op code.Opcode) error {
+	right := vm.pop() // 2
+	left := vm.pop()  // 1
+	// 操作数类型是否兼容
+	leftType := left.Type()
+	rightType := right.Type()
+	if leftType == object.INTEGER_OBJ && rightType == object.INTEGER_OBJ {
+		return vm.executeBinaryIntegerOperation(op, left, right)
+	}
+	return fmt.Errorf("unsupported types for binary operation: %s %s", leftType, rightType)
+}
+
+// executeBinaryIntegerOperation integer运算
+func (vm *VM) executeBinaryIntegerOperation(op code.Opcode, left, right object.Object) error {
+	leftValue := left.(*object.Integer).Value
+	rightValue := right.(*object.Integer).Value
+	var result int64
+	switch op {
+	case code.OpAdd:
+		result = leftValue + rightValue
+	case code.OpSub:
+		result = leftValue - rightValue
+	case code.OpMul:
+		result = leftValue * rightValue
+	case code.OpDiv:
+		result = leftValue / rightValue
+	default:
+		return fmt.Errorf("unknown integer operator: %d", op)
+	}
+	return vm.push(&object.Integer{Value: result})
 }
 
 // push 压入一个常量到虚拟栈
