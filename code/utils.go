@@ -15,6 +15,8 @@ var definitions = map[Opcode]*Definition{
 	OpSub:      {"OpSub", []int{}},       // 无操作数
 	OpMul:      {"opMul", []int{}},       // 无操作数
 	OpDiv:      {"OpDiv", []int{}},       // 无操作数
+	OpTrue:     {"OpTrue", []int{}},      // 无操作数
+	OpFalse:    {"OpFalse", []int{}},     // 无操作数
 }
 
 func Lookup(op byte) (*Definition, error) {

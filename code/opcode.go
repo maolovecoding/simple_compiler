@@ -10,4 +10,6 @@ const (
 	OpSub                    // 减法操作码
 	OpMul                    // 乘法操作码
 	OpDiv                    // 除法操作码
+	OpTrue                   // 压栈 true
+	OpFalse                  // false
 )

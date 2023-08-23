@@ -40,7 +40,16 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return nil
 			}
-
+		case code.OpTrue:
+			err := vm.push(True)
+			if err != nil {
+				return err
+			}
+		case code.OpFalse:
+			err := vm.push(False)
+			if err != nil {
+				return err
+			}
 		case code.OpPop:
 			vm.pop()
 		}
