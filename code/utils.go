@@ -20,6 +20,8 @@ var definitions = map[Opcode]*Definition{
 	OpEqual:       {"OpEqual", []int{}},       // 无操作数
 	OpNotEqual:    {"OpNotEqual", []int{}},    // 无操作数
 	OpGreaterThan: {"OpGreaterThan", []int{}}, // 无操作数
+	OpMinus:       {"OpMinus", []int{}},       // 无操作数
+	OpBang:        {"OpBang", []int{}},        // 无操作数
 }
 
 func Lookup(op byte) (*Definition, error) {

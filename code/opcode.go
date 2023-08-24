@@ -15,4 +15,6 @@ const (
 	OpEqual                     // ==
 	OpNotEqual                  // !=
 	OpGreaterThan               // >  比较的是栈顶元素 < 没必要定义 通过编译器来实现代码重排序即可 比如 3 < 5 可以写成 5 > 3
+	OpMinus                     // - 前缀
+	OpBang                      // ! 前缀
 )
