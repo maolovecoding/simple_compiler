@@ -16,8 +16,10 @@ Compiler 编译器
 4. 将它们添加到常量字段，最后将 code.OpConstant 指令添加到内部的 code.Instructions 切片 (压栈)
 */
 type Compiler struct {
-	instructions code.Instructions // 指令集 字节码
-	constants    []object.Object   // 常量的内在表示集 常量池
+	instructions        code.Instructions  // 指令集 字节码
+	constants           []object.Object    // 常量的内在表示集 常量池
+	lastInstruction     EmittedInstruction // 记录最后发出的指令
+	previousInstruction EmittedInstruction // 倒数第二条发出的指令
 }
 
 // Compile 编译
@@ -90,6 +92,31 @@ func (c *Compiler) Compile(node ast.Node) error {
 		default:
 			return fmt.Errorf("unknown operator %s", node.Operator)
 		}
+	case *ast.IfExpression: // 表达式语句 -> 条件表达式 -> 回到表达式语句 -> pop 导致条件的值弹栈 这个不应该弹出 如何处理？ 追踪发出的最后两条指令
+		err := c.Compile(node.Condition)
+		if err != nil {
+			return err
+		}
+		// TODO 先搞一个假的跳转指令 偏移量是随便写的 在编译完 node.Consequence后知道了偏移量 再修复
+		jumpNotTruthyPos := c.emit(code.OpJumpNotTruthy, 9999)
+		err = c.Compile(node.Consequence) // 编译 if成立的块级语句生成指令
+		if err != nil {
+			return err
+		}
+		// 如果最后一条指令是pop则移除掉 TODO 为什么？块级表达式也是表达式语句 会生成一个pop 这个不应该产生 需要干掉
+		if c.lastInstructionIsPop() {
+			c.removeLastPop()
+		}
+		afterConsequencePos := len(c.instructions) // 看生成块级语句的指令后 偏移量到哪里了
+		c.changeOperand(jumpNotTruthyPos, afterConsequencePos)
+	case *ast.BlockStatement:
+		var err error = nil
+		for _, s := range node.Statements {
+			err = c.Compile(s)
+			if err != nil {
+				return err
+			}
+		}
 	case *ast.IntegerLiteral:
 		/*
 			  思考：
@@ -126,7 +153,16 @@ operands ...int 操作数 是地址
 func (c *Compiler) emit(op code.Opcode, operands ...int) int {
 	ins := code.Make(op, operands...)
 	pos := c.addInstruction(ins) // 添加指令 拿到指令的索引
+	c.setLastInstruction(op, pos)
 	return pos
+}
+
+// setLastInstruction 更新最后一条设置的指令 和倒数第二条
+func (c *Compiler) setLastInstruction(op code.Opcode, pos int) {
+	previous := c.lastInstruction
+	last := EmittedInstruction{Opcode: op, Position: pos}
+	c.previousInstruction = previous
+	c.lastInstruction = last
 }
 
 // addConstant 把求值结果添加到常量池
@@ -140,4 +176,34 @@ func (c *Compiler) addInstruction(ins []byte) int {
 	posNewInstruction := len(c.instructions)
 	c.instructions = append(c.instructions, ins...)
 	return posNewInstruction
+}
+
+// lastInstructionIsPop 最后一条指令是否是 pop
+func (c *Compiler) lastInstructionIsPop() bool {
+	return c.lastInstruction.Opcode == code.OpPop
+}
+
+// removeLastPop 删除最后一条指令
+func (c *Compiler) removeLastPop() {
+	c.instructions = c.instructions[:c.lastInstruction.Position]
+	c.lastInstruction = c.previousInstruction
+}
+
+// replaceInstruction 指令集替换 将指令集中pos偏移位置开始的指令替换为新指令
+func (c *Compiler) replaceInstruction(pos int, newInstruction []byte) {
+	for i := 0; i < len(newInstruction); i++ {
+		c.instructions[pos+i] = newInstruction[i]
+	}
+}
+
+/*
+changeOperand 改变指令集中 指定偏移量的操作数 是替换（是相同非可变长的指令）
+
+opPos int 是指令在指令集中的位置
+operand int 操作数
+*/
+func (c *Compiler) changeOperand(opPos int, operand int) {
+	op := code.Opcode(c.instructions[opPos])
+	newInstruction := code.Make(op, operand) // 根据操作码 和操作数 重新构造指令
+	c.replaceInstruction(opPos, newInstruction)
 }
