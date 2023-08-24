@@ -38,6 +38,19 @@ func (c *Compiler) Compile(node ast.Node) error {
 		// 表达式语句产生的常量其实是临时的 使用完需要弹栈
 		c.emit(code.OpPop) // 添加弹栈指令
 	case *ast.InfixExpression:
+		// 对 < 表达式重构为 大于表达式
+		if node.Operator == "<" {
+			err := c.Compile(node.Right)
+			if err != nil {
+				return err
+			}
+			err = c.Compile(node.Left)
+			if err != nil {
+				return err
+			}
+			c.emit(code.OpGreaterThan)
+			return nil
+		}
 		err := c.Compile(node.Left)
 		if err != nil {
 			return err
@@ -55,6 +68,12 @@ func (c *Compiler) Compile(node ast.Node) error {
 			c.emit(code.OpMul)
 		case "/":
 			c.emit(code.OpDiv)
+		case ">": // 1 < 2 重构为 2 > 1
+			c.emit(code.OpGreaterThan)
+		case "==":
+			c.emit(code.OpEqual)
+		case "!=":
+			c.emit(code.OpNotEqual)
 		default:
 			return fmt.Errorf("unknown operator %s", node.Operator)
 		}
