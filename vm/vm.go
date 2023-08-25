@@ -55,6 +55,16 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return nil
 			}
+		case code.OpJump:
+			pos := int(code.ReadUint16(vm.instructions[ip+1:])) // 读出操作数 就是地址
+			ip = pos - 1                                        // 程序计数器 也就是指针 直接去到要跳转的位置
+		case code.OpJumpNotTruthy:
+			pos := int(code.ReadUint16(vm.instructions[ip+1:])) // 条件为假跳转的地址
+			ip += 2                                             // 跳过操作数 地址是两个字节 应该跳过去了
+			condition := vm.pop()
+			if !isTruthy(condition) {
+				ip = pos - 1 // 循环 + 1了 这里就 -1 抵消
+			}
 		case code.OpTrue:
 			err := vm.push(True)
 			if err != nil {
