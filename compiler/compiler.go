@@ -20,6 +20,7 @@ type Compiler struct {
 	constants           []object.Object    // 常量的内在表示集 常量池
 	lastInstruction     EmittedInstruction // 记录最后发出的指令
 	previousInstruction EmittedInstruction // 倒数第二条发出的指令
+	symbolTable         *SymbolTable       // 符号表
 }
 
 // Compile 编译
@@ -137,6 +138,14 @@ func (c *Compiler) Compile(node ast.Node) error {
 		if err != nil {
 			return err
 		}
+		symbol := c.symbolTable.Define(node.Name.Value) // 定义标识
+		c.emit(code.OpSetGlobal, symbol.Index)          // 设值 栈顶的值设置到该操作数（在符号表中的地址）
+	case *ast.Identifier:
+		symbol, ok := c.symbolTable.Resolve(node.Value)
+		if !ok {
+			return fmt.Errorf("undefined varible %s", node.Value) // 变量未定义 编译报错（非运行时错误）
+		}
+		c.emit(code.OpGetGlobal, symbol.Index)
 	case *ast.IntegerLiteral:
 		/*
 			  思考：
