@@ -19,4 +19,5 @@ const (
 	OpBang                        // ! 前缀
 	OpJumpNotTruthy               // 有条件跳转
 	OpJump                        // 无条件跳转
+	OpNull                        // 压入null
 )

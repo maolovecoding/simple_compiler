@@ -24,6 +24,7 @@ var definitions = map[Opcode]*Definition{
 	OpBang:          {"OpBang", []int{}},           // 无操作数
 	OpJumpNotTruthy: {"OpJumpNotTruthy", []int{2}}, // 条件跳转 栈顶元素为false跳转
 	OpJump:          {"OpJump", []int{2}},          // 无条件跳转 跳转位置就是操作数所在的地址
+	OpNull:          {"OpNull", []int{}},           // 压入null
 }
 
 func Lookup(op byte) (*Definition, error) {

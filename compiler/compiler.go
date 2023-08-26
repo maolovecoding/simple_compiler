@@ -107,14 +107,13 @@ func (c *Compiler) Compile(node ast.Node) error {
 		if c.lastInstructionIsPop() {
 			c.removeLastPop()
 		}
+		// 假偏移量的 opJump
+		jumpPos := c.emit(code.OpJump, 9999)
+		afterConsequencePos := len(c.instructions) // 看生成块级语句的指令后 偏移量到哪里了
+		c.changeOperand(jumpNotTruthyPos, afterConsequencePos)
 		if node.Alternative == nil {
-			afterConsequencePos := len(c.instructions) // 看生成块级语句的指令后 偏移量到哪里了
-			c.changeOperand(jumpNotTruthyPos, afterConsequencePos)
+			c.emit(code.OpNull) // 没有else部分 生成压入null指令
 		} else {
-			// 假偏移量的 opJump
-			jumpPos := c.emit(code.OpJump, 9999)
-			afterConsequencePos := len(c.instructions)
-			c.changeOperand(jumpNotTruthyPos, afterConsequencePos)
 			err = c.Compile(node.Alternative)
 			if err != nil {
 				return err
@@ -122,9 +121,9 @@ func (c *Compiler) Compile(node ast.Node) error {
 			if c.lastInstructionIsPop() {
 				c.removeLastPop()
 			}
-			afterAlternativePos := len(c.instructions)
-			c.changeOperand(jumpPos, afterAlternativePos) // 回填地址
 		}
+		afterAlternativePos := len(c.instructions)
+		c.changeOperand(jumpPos, afterAlternativePos) // 回填地址
 	case *ast.BlockStatement:
 		var err error = nil
 		for _, s := range node.Statements {

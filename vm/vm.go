@@ -65,6 +65,11 @@ func (vm *VM) Run() error {
 			if !isTruthy(condition) {
 				ip = pos - 1 // 循环 + 1了 这里就 -1 抵消
 			}
+		case code.OpNull:
+			err := vm.push(Null)
+			if err != nil {
+				return err
+			}
 		case code.OpTrue:
 			err := vm.push(True)
 			if err != nil {
@@ -155,6 +160,8 @@ func (vm *VM) executeBangOperator() error {
 	case True:
 		return vm.push(False)
 	case False:
+		return vm.push(True)
+	case Null:
 		return vm.push(True)
 	default:
 		return vm.push(False)
