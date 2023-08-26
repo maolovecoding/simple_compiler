@@ -20,4 +20,6 @@ const (
 	OpJumpNotTruthy               // 有条件跳转
 	OpJump                        // 无条件跳转
 	OpNull                        // 压入null
+	OpSetGlobal                   // 绑定值到变量 操作数就是变量名地址
+	OpGetGlobal                   // 获取绑定到变量的值 操作数是以前绑定的变量名地址
 )
