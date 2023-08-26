@@ -98,6 +98,13 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return err
 			}
+		case code.OpIndex:
+			index := vm.pop()
+			left := vm.pop()
+			err := vm.executeIndexExpression(left, index)
+			if err != nil {
+				return err
+			}
 		case code.OpNull:
 			err := vm.push(Null)
 			if err != nil {
@@ -223,6 +230,39 @@ func (vm *VM) executeMinusOperator() error {
 	}
 	value := operand.(*object.Integer).Value
 	return vm.push(&object.Integer{Value: -value})
+}
+
+// executeIndexExpression 索引表达式求值
+func (vm *VM) executeIndexExpression(left, index object.Object) error {
+	switch {
+	case left.Type() == object.ARRAY_OBJ && index.Type() == object.INTEGER_OBJ:
+		return vm.executeArrayIndex(left, index)
+	case left.Type() == object.HASH_OBJ:
+		return vm.executeHashIndex(left, index)
+	default:
+		return fmt.Errorf("index operator not supported: %s", left.Type())
+	}
+}
+func (vm *VM) executeArrayIndex(left object.Object, index object.Object) error {
+	array := left.(*object.Array)
+	idx := index.(*object.Integer).Value
+	max := int64(len(array.Elements) - 1)
+	if idx < 0 || idx > max {
+		return vm.push(Null) // 越界 获取元素是null 入栈
+	}
+	return vm.push(array.Elements[idx])
+}
+func (vm *VM) executeHashIndex(left object.Object, index object.Object) error {
+	hash := left.(*object.Hash)
+	key, ok := index.(object.Hashable)
+	if !ok {
+		return fmt.Errorf("unusable as hash key: %s", index.Type()) // 不可作为索引
+	}
+	pair, ok := hash.Pairs[key.HashKey()]
+	if !ok {
+		return vm.push(Null) // 没有该键对应的值
+	}
+	return vm.push(pair.Value)
 }
 
 // buildArray 构建一个数组
