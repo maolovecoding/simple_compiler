@@ -23,4 +23,5 @@ const (
 	OpSetGlobal                   // 绑定值到变量 操作数就是变量名地址
 	OpGetGlobal                   // 获取绑定到变量的值 操作数是以前绑定的变量名地址
 	OpArray                       // 数组字面量操作码 操作数是数组元素个数
+	OpHash                        // 创建hash对象操作码 操作数是键值对的个数 * 2
 )

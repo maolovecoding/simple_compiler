@@ -81,8 +81,20 @@ func (vm *VM) Run() error {
 			numElements := int(code.ReadUint16(vm.instructions[ip+1:]))
 			ip += 2
 			array := vm.buildArray(vm.sp-numElements, vm.sp) // 构建数组 栈中 sp-numElements到sp是数组元素
-			vm.sp = vm.sp - numElements
+			vm.sp = vm.sp - numElements                      // 元素全部被覆盖了 相当于弹栈了
 			err := vm.push(array)
+			if err != nil {
+				return err
+			}
+		case code.OpHash:
+			numElements := int(code.ReadUint16(vm.instructions[ip+1:]))
+			ip += 2
+			hash, err := vm.buildHash(vm.sp-numElements, vm.sp)
+			if err != nil {
+				return err
+			}
+			vm.sp = vm.sp - numElements // hash元素全部被覆盖了 相当于弹栈了
+			err = vm.push(hash)
 			if err != nil {
 				return err
 			}
@@ -220,6 +232,22 @@ func (vm *VM) buildArray(startIndex, endIndex int) object.Object {
 		elements[i] = vm.stack[i]
 	}
 	return &object.Array{Elements: elements}
+}
+
+// buildHash 构建一个hash
+func (vm *VM) buildHash(startIndex, endIndex int) (object.Object, error) {
+	hashPairs := make(map[object.HashKey]object.HashPair)
+	for i := startIndex; i < endIndex; i += 2 {
+		key := vm.stack[i]
+		value := vm.stack[i+1]
+		pair := object.HashPair{Key: key, Value: value}
+		hashKey, ok := key.(object.Hashable)
+		if !ok {
+			return nil, fmt.Errorf("unusable as hash key: %s", key.Type())
+		}
+		hashPairs[hashKey.HashKey()] = pair
+	}
+	return &object.Hash{Pairs: hashPairs}, nil
 }
 
 // push 压入一个常量到虚拟栈
