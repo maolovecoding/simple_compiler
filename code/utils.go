@@ -27,6 +27,7 @@ var definitions = map[Opcode]*Definition{
 	OpNull:          {"OpNull", []int{}},           // 压入null
 	OpSetGlobal:     {"OpSetGlobal", []int{2}},     // 操作数是变量名地址
 	OpGetGlobal:     {"OpGetGlobal", []int{2}},     // 操作数是变量名地址
+	OpArray:         {"OpArray", []int{2}},         // 操作数是数组元素个数
 }
 
 func Lookup(op byte) (*Definition, error) {

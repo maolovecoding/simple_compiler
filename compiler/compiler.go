@@ -140,6 +140,14 @@ func (c *Compiler) Compile(node ast.Node) error {
 		}
 		symbol := c.symbolTable.Define(node.Name.Value) // 定义标识
 		c.emit(code.OpSetGlobal, symbol.Index)          // 设值 栈顶的值设置到该操作数（在符号表中的地址）
+	case *ast.ArrayLiteral:
+		for _, ele := range node.Elements {
+			err := c.Compile(ele)
+			if err != nil {
+				return err
+			}
+		}
+		c.emit(code.OpArray, len(node.Elements))
 	case *ast.Identifier:
 		symbol, ok := c.symbolTable.Resolve(node.Value)
 		if !ok {

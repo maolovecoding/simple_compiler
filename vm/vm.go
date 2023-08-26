@@ -77,6 +77,15 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return err
 			}
+		case code.OpArray:
+			numElements := int(code.ReadUint16(vm.instructions[ip+1:]))
+			ip += 2
+			array := vm.buildArray(vm.sp-numElements, vm.sp) // 构建数组 栈中 sp-numElements到sp是数组元素
+			vm.sp = vm.sp - numElements
+			err := vm.push(array)
+			if err != nil {
+				return err
+			}
 		case code.OpNull:
 			err := vm.push(Null)
 			if err != nil {
@@ -202,6 +211,15 @@ func (vm *VM) executeMinusOperator() error {
 	}
 	value := operand.(*object.Integer).Value
 	return vm.push(&object.Integer{Value: -value})
+}
+
+// buildArray 构建一个数组
+func (vm *VM) buildArray(startIndex, endIndex int) object.Object {
+	elements := make([]object.Object, endIndex-startIndex)
+	for i := startIndex; i < endIndex; i++ {
+		elements[i] = vm.stack[i]
+	}
+	return &object.Array{Elements: elements}
 }
 
 // push 压入一个常量到虚拟栈
