@@ -15,6 +15,7 @@ type VM struct {
 	instructions code.Instructions // 指令集
 	stack        []object.Object   // 虚拟栈
 	sp           int               // 栈指针 始终指向栈中的下一个空闲槽  栈顶的值是 stack[sp-1]
+	globals      []object.Object   // 全局变量
 }
 
 /*
@@ -64,6 +65,17 @@ func (vm *VM) Run() error {
 			condition := vm.pop()
 			if !isTruthy(condition) {
 				ip = pos - 1 // 循环 + 1了 这里就 -1 抵消
+			}
+		case code.OpSetGlobal:
+			globalIndex := code.ReadUint16(vm.instructions[ip+1:])
+			ip += 2                            // 跳过操作数
+			vm.globals[globalIndex] = vm.pop() // 变量绑定值
+		case code.OpGetGlobal:
+			globalIndex := code.ReadUint16(vm.instructions[ip+1:])
+			ip += 2
+			err := vm.push(vm.globals[globalIndex])
+			if err != nil {
+				return err
 			}
 		case code.OpNull:
 			err := vm.push(Null)

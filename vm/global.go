@@ -10,3 +10,6 @@ var False = &object.Boolean{Value: false}
 
 // Null 无求值表达式 返回null
 var Null = &object.Null{}
+
+// GlobalsSize 全局变量的个数
+const GlobalsSize = 65535

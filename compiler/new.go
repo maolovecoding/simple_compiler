@@ -15,3 +15,11 @@ func New() *Compiler {
 		symbolTable:         NewSymbolTable(),
 	}
 }
+
+// NewWithState 创建编译器对象 覆盖已有的符号表和常量
+func NewWithState(s *SymbolTable, constants []object.Object) *Compiler {
+	compiler := New()
+	compiler.symbolTable = s
+	compiler.constants = constants
+	return compiler
+}
