@@ -7,12 +7,19 @@ import (
 
 // New 创建一个 compiler
 func New() *Compiler {
-	return &Compiler{
+	mainScope := CompilationScope{
 		instructions:        code.Instructions{},
-		constants:           []object.Object{},
 		lastInstruction:     EmittedInstruction{},
 		previousInstruction: EmittedInstruction{},
-		symbolTable:         NewSymbolTable(),
+	}
+	return &Compiler{
+		//instructions:        code.Instructions{},
+		constants: []object.Object{},
+		//lastInstruction:     EmittedInstruction{},
+		//previousInstruction: EmittedInstruction{},
+		symbolTable: NewSymbolTable(),
+		scopes:      []CompilationScope{mainScope},
+		scopeIndex:  0,
 	}
 }
 

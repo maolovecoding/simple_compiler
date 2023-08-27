@@ -17,11 +17,13 @@ Compiler 编译器
 4. 将它们添加到常量字段，最后将 code.OpConstant 指令添加到内部的 code.Instructions 切片 (压栈)
 */
 type Compiler struct {
-	instructions        code.Instructions  // 指令集 字节码
-	constants           []object.Object    // 常量的内在表示集 常量池
-	lastInstruction     EmittedInstruction // 记录最后发出的指令
-	previousInstruction EmittedInstruction // 倒数第二条发出的指令
-	symbolTable         *SymbolTable       // 符号表
+	//instructions        code.Instructions  // 指令集 字节码
+	constants []object.Object // 常量的内在表示集 常量池
+	//lastInstruction     EmittedInstruction // 记录最后发出的指令
+	//previousInstruction EmittedInstruction // 倒数第二条发出的指令
+	symbolTable *SymbolTable       // 符号表
+	scopes      []CompilationScope // 编译作用域
+	scopeIndex  int                // 在那个作用域
 }
 
 // Compile 编译
@@ -106,12 +108,12 @@ func (c *Compiler) Compile(node ast.Node) error {
 			return err
 		}
 		// 如果最后一条指令是pop则移除掉 TODO 为什么？块级表达式也是表达式语句 会生成一个pop 这个不应该产生 需要干掉
-		if c.lastInstructionIsPop() {
+		if c.lastInstructionIs(code.OpPop) {
 			c.removeLastPop()
 		}
 		// 假偏移量的 opJump
 		jumpPos := c.emit(code.OpJump, 9999)
-		afterConsequencePos := len(c.instructions) // 看生成块级语句的指令后 偏移量到哪里了
+		afterConsequencePos := len(c.currentInstructions()) // 看生成块级语句的指令后 偏移量到哪里了
 		c.changeOperand(jumpNotTruthyPos, afterConsequencePos)
 		if node.Alternative == nil {
 			c.emit(code.OpNull) // 没有else部分 生成压入null指令
@@ -120,11 +122,11 @@ func (c *Compiler) Compile(node ast.Node) error {
 			if err != nil {
 				return err
 			}
-			if c.lastInstructionIsPop() {
+			if c.lastInstructionIs(code.OpPop) {
 				c.removeLastPop()
 			}
 		}
-		afterAlternativePos := len(c.instructions)
+		afterAlternativePos := len(c.currentInstructions())
 		c.changeOperand(jumpPos, afterAlternativePos) // 回填地址
 	case *ast.BlockStatement:
 		var err error = nil
@@ -179,6 +181,28 @@ func (c *Compiler) Compile(node ast.Node) error {
 			return err
 		}
 		c.emit(code.OpIndex)
+	case *ast.FunctionLiteral:
+		c.enterScope() // 进入新的编译作用域 函数指令在这个作用域下生成
+		err := c.Compile(node.Body)
+		if err != nil {
+			return err
+		}
+		if c.lastInstructionIs(code.OpPop) { // 函数最后一条指令是pop 隐式函数返回值 把指令转为 OpReturnValue
+			c.replaceLastPopWithReturn()
+		}
+		if !c.lastInstructionIs(code.OpReturnValue) {
+			// 空函数体 fn () {} & 不能转换为该语句的情况 比如 let name = "zs";
+			c.emit(code.OpReturnValue)
+		}
+		instructions := c.leaveScope() // 函数作用域下生成的指令集
+		compiledFn := &object.CompiledFunction{Instructions: instructions}
+		c.emit(code.OpConstant, c.addConstant(compiledFn)) // 编译函数字面量 添加到常量池
+	case *ast.ReturnStatement:
+		err := c.Compile(node.ReturnValue)
+		if err != nil {
+			return err
+		}
+		c.emit(code.OpReturnValue)
 	case *ast.Identifier:
 		symbol, ok := c.symbolTable.Resolve(node.Value)
 		if !ok {
@@ -209,7 +233,7 @@ func (c *Compiler) Compile(node ast.Node) error {
 
 func (c *Compiler) Bytecode() *Bytecode {
 	return &Bytecode{
-		Instructions: c.instructions,
+		Instructions: c.currentInstructions(),
 		Constants:    c.constants,
 	}
 }
@@ -230,10 +254,10 @@ func (c *Compiler) emit(op code.Opcode, operands ...int) int {
 
 // setLastInstruction 更新最后一条设置的指令 和倒数第二条
 func (c *Compiler) setLastInstruction(op code.Opcode, pos int) {
-	previous := c.lastInstruction
+	previous := c.scopes[c.scopeIndex].lastInstruction
 	last := EmittedInstruction{Opcode: op, Position: pos}
-	c.previousInstruction = previous
-	c.lastInstruction = last
+	c.scopes[c.scopeIndex].previousInstruction = previous
+	c.scopes[c.scopeIndex].lastInstruction = last
 }
 
 // addConstant 把求值结果添加到常量池
@@ -244,26 +268,35 @@ func (c *Compiler) addConstant(obj object.Object) int {
 
 // addInstruction 添加一条新指令到指令集 并返回指令在指令集中的索引
 func (c *Compiler) addInstruction(ins []byte) int {
-	posNewInstruction := len(c.instructions)
-	c.instructions = append(c.instructions, ins...)
+	posNewInstruction := len(c.currentInstructions())
+	updatedInstructions := append(c.currentInstructions(), ins...)
+	c.scopes[c.scopeIndex].instructions = updatedInstructions
 	return posNewInstruction
 }
 
-// lastInstructionIsPop 最后一条指令是否是 pop
-func (c *Compiler) lastInstructionIsPop() bool {
-	return c.lastInstruction.Opcode == code.OpPop
+// lastInstructionIs 断言最后一条指令是否是 op
+func (c *Compiler) lastInstructionIs(op code.Opcode) bool {
+	if len(c.currentInstructions()) == 0 {
+		return false
+	}
+	return c.scopes[c.scopeIndex].lastInstruction.Opcode == op
 }
 
 // removeLastPop 删除最后一条指令
 func (c *Compiler) removeLastPop() {
-	c.instructions = c.instructions[:c.lastInstruction.Position]
-	c.lastInstruction = c.previousInstruction
+	last := c.scopes[c.scopeIndex].lastInstruction
+	previous := c.scopes[c.scopeIndex].previousInstruction
+	old := c.currentInstructions()
+	newIns := old[:last.Position]
+	c.scopes[c.scopeIndex].instructions = newIns
+	c.scopes[c.scopeIndex].lastInstruction = previous
 }
 
 // replaceInstruction 指令集替换 将指令集中pos偏移位置开始的指令替换为新指令
 func (c *Compiler) replaceInstruction(pos int, newInstruction []byte) {
+	ins := c.currentInstructions()
 	for i := 0; i < len(newInstruction); i++ {
-		c.instructions[pos+i] = newInstruction[i]
+		ins[pos+i] = newInstruction[i]
 	}
 }
 
@@ -274,7 +307,38 @@ opPos int 是指令在指令集中的位置
 operand int 操作数
 */
 func (c *Compiler) changeOperand(opPos int, operand int) {
-	op := code.Opcode(c.instructions[opPos])
+	op := code.Opcode(c.scopes[c.scopeIndex].instructions[opPos])
 	newInstruction := code.Make(op, operand) // 根据操作码 和操作数 重新构造指令
 	c.replaceInstruction(opPos, newInstruction)
+}
+
+// currentInstructions 获取当前作用域的指令集
+func (c *Compiler) currentInstructions() code.Instructions {
+	return c.scopes[c.scopeIndex].instructions
+}
+
+// enterScope 进入一个新的编译作用域 生成的指令在该作用域下
+func (c *Compiler) enterScope() {
+	scope := CompilationScope{
+		instructions:        code.Instructions{},
+		lastInstruction:     EmittedInstruction{},
+		previousInstruction: EmittedInstruction{},
+	}
+	c.scopes = append(c.scopes, scope)
+	c.scopeIndex++
+}
+
+// leaveScope 离开当前编译作用域 回到父作用域
+func (c *Compiler) leaveScope() code.Instructions {
+	instructions := c.currentInstructions()
+	c.scopes = c.scopes[:len(c.scopes)-1]
+	c.scopeIndex--
+	return instructions
+}
+
+// replaceLastPopWithReturn 函数返回值隐式 最后一条指令是pop转换为 returnValue 指令是等长的 注意
+func (c *Compiler) replaceLastPopWithReturn() {
+	lastPos := c.scopes[c.scopeIndex].lastInstruction.Position
+	c.replaceInstruction(lastPos, code.Make(code.OpReturnValue))       // 只有操作码
+	c.scopes[c.scopeIndex].lastInstruction.Opcode = code.OpReturnValue // 替换操作码
 }

@@ -25,4 +25,7 @@ const (
 	OpArray                       // 数组字面量操作码 操作数是数组元素个数
 	OpHash                        // 创建hash对象操作码 操作数是键值对的个数 * 2
 	OpIndex                       // 索引运算符操作 弹出栈顶两个元素
+	OpCall                        // 函数调用
+	OpReturnValue                 // 函数调用有
+	OpReturn                      // 函数调用无返回值 回到调用这个函数之前的逻辑
 )
