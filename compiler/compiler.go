@@ -192,7 +192,7 @@ func (c *Compiler) Compile(node ast.Node) error {
 		}
 		if !c.lastInstructionIs(code.OpReturnValue) {
 			// 空函数体 fn () {} & 不能转换为该语句的情况 比如 let name = "zs";
-			c.emit(code.OpReturnValue)
+			c.emit(code.OpReturn)
 		}
 		instructions := c.leaveScope() // 函数作用域下生成的指令集
 		compiledFn := &object.CompiledFunction{Instructions: instructions}
