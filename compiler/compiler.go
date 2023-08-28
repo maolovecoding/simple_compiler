@@ -142,7 +142,11 @@ func (c *Compiler) Compile(node ast.Node) error {
 			return err
 		}
 		symbol := c.symbolTable.Define(node.Name.Value) // 定义标识
-		c.emit(code.OpSetGlobal, symbol.Index)          // 设值 栈顶的值设置到该操作数（在符号表中的地址）
+		if symbol.Scope == GlobalScope {
+			c.emit(code.OpSetGlobal, symbol.Index) // 设值 栈顶的值设置到该操作数（在符号表中的地址）
+		} else {
+			c.emit(code.OpSetLocal, symbol.Index) // 局部符号表
+		}
 	case *ast.ArrayLiteral:
 		for _, ele := range node.Elements {
 			err := c.Compile(ele)
@@ -214,7 +218,11 @@ func (c *Compiler) Compile(node ast.Node) error {
 		if !ok {
 			return fmt.Errorf("undefined varible %s", node.Value) // 变量未定义 编译报错（非运行时错误）
 		}
-		c.emit(code.OpGetGlobal, symbol.Index)
+		if symbol.Scope == GlobalScope {
+			c.emit(code.OpGetGlobal, symbol.Index)
+		} else {
+			c.emit(code.OpGetLocal, symbol.Index)
+		}
 	case *ast.StringLiteral:
 		str := &object.String{Value: node.Value}
 		c.emit(code.OpConstant, c.addConstant(str))
@@ -331,6 +339,7 @@ func (c *Compiler) enterScope() {
 		previousInstruction: EmittedInstruction{},
 	}
 	c.scopes = append(c.scopes, scope)
+	c.symbolTable = NewEnclosedSymbolTable(c.symbolTable) // 函数作用域下的符号表
 	c.scopeIndex++
 }
 
@@ -339,6 +348,7 @@ func (c *Compiler) leaveScope() code.Instructions {
 	instructions := c.currentInstructions()
 	c.scopes = c.scopes[:len(c.scopes)-1]
 	c.scopeIndex--
+	c.symbolTable = c.symbolTable.Outer // 回到调用方作用域下的符号表
 	return instructions
 }
 
