@@ -6,6 +6,7 @@ type SymbolScope string // 作用域
 
 const (
 	GlobalScope SymbolScope = "GLOBAL"
+	LocalScope  SymbolScope = "LOCAL"
 )
 
 // Symbol 符号 标识
@@ -16,6 +17,7 @@ type Symbol struct {
 }
 
 type SymbolTable struct {
+	Outer          *SymbolTable // 父级符号表
 	store          map[string]Symbol
 	numDefinitions int
 }
@@ -26,9 +28,21 @@ func NewSymbolTable() *SymbolTable {
 	return &SymbolTable{store: s}
 }
 
+// NewEnclosedSymbolTable 基于父 SymbolTable 创建符号表
+func NewEnclosedSymbolTable(outer *SymbolTable) *SymbolTable {
+	s := NewSymbolTable()
+	s.Outer = outer
+	return s
+}
+
 // Define 在作用域定义一个变量 并更新其在符号表中的地址
 func (s *SymbolTable) Define(name string) Symbol {
-	symbol := Symbol{Name: name, Index: s.numDefinitions, Scope: GlobalScope}
+	symbol := Symbol{Name: name, Index: s.numDefinitions}
+	if s.Outer == nil { // 全局的
+		symbol.Scope = GlobalScope
+	} else {
+		symbol.Scope = LocalScope
+	}
 	s.store[name] = symbol
 	s.numDefinitions++
 	return symbol
@@ -37,5 +51,8 @@ func (s *SymbolTable) Define(name string) Symbol {
 // Resolve 取变量对应的标识 symbol
 func (s *SymbolTable) Resolve(name string) (Symbol, bool) {
 	obj, ok := s.store[name]
+	if !ok && s.Outer != nil {
+		return s.Outer.Resolve(name)
+	}
 	return obj, ok
 }
