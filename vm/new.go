@@ -25,3 +25,11 @@ func NewWithGlobalsStore(bytecode *compiler.Bytecode, s []object.Object) *VM {
 	vm.globals = s
 	return vm
 }
+
+// NewFrame 创建一个新的帧
+func NewFrame(fn *object.CompiledFunction) *Frame {
+	return &Frame{
+		fn: fn,
+		ip: -1,
+	}
+}
