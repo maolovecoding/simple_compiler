@@ -28,4 +28,6 @@ const (
 	OpCall                        // 函数调用
 	OpReturnValue                 // 函数调用有
 	OpReturn                      // 函数调用无返回值 回到调用这个函数之前的逻辑
+	OpGetLocal                    // 获取局部绑定变量
+	OpSetLocal                    // 设置局部绑定变量
 )

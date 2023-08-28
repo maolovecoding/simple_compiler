@@ -26,6 +26,8 @@ func Make(op Opcode, operands ...int) []byte {
 		case 2: // 这个操作数的宽度是2 2个字节
 			// 构建指令 大端模式 指令 = 操作码 + 操作数(这里o是操作数 大端模式处理为二进制然后放到指令中)
 			binary.BigEndian.PutUint16(instruction[offset:], uint16(o))
+		case 1:
+			instruction[offset] = byte(o) // 单字节
 		}
 		offset += width
 	}

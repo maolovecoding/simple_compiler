@@ -17,6 +17,8 @@ func ReadOperands(def *Definition, ins Instructions) ([]int, int) {
 		switch width {
 		case 2:
 			operands[i] = int(ReadUint16(ins[offset:])) // 转为int类型操作数了
+		case 1:
+			operands[i] = int(ReadUint8(ins[offset:]))
 		}
 		offset += width
 	}
@@ -26,4 +28,9 @@ func ReadOperands(def *Definition, ins Instructions) ([]int, int) {
 // ReadUint16 二进制大端的操作数切片读取 转为无符号整形 返回
 func ReadUint16(ins Instructions) uint16 {
 	return binary.BigEndian.Uint16(ins)
+}
+
+// ReadUint8 转为无符号整形
+func ReadUint8(ins Instructions) uint8 {
+	return uint8(ins[0])
 }
