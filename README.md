@@ -13,3 +13,41 @@
 ## parse方法
 普拉斯解析的工作方式
 - 递归下降算法
+
+
+## 使用方式
+### 定义变量
+```js
+let name = "zs"
+```
+### 定义一个布尔
+```js
+let flag = true
+```
+### 定义一个数组
+```js
+let names = ['zs','ls']
+```
+### 定义一个数子
+```js
+let num = 10
+```
+### 定义一个hash
+```js
+let name = 'ls'
+let map = {
+    "zs": "ls",
+    name: 'zs'
+}
+```
+### 定义函数
+```txt
+let getName = fn() {
+    return "zs";
+}
+```
+### 内置函数调用
+```js
+let names = ['zs','ls'];
+first(names)
+```
