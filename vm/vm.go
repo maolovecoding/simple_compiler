@@ -118,20 +118,34 @@ func (vm *VM) Run() error {
 			if !ok {
 				return fmt.Errorf("calling non-function")
 			}
-			frame := NewFrame(fn)
+			frame := NewFrame(fn, vm.sp)
 			vm.pushFrame(frame)
+			vm.sp = frame.basePointer + fn.NumLocals // 创造 “空缺” 预留局部变量个数的位置 在函数调用时将创建的局部变量填充在这里 压栈 & 弹栈
 		case code.OpReturnValue:
-			returnValue := vm.pop() // 函数返回值
-			vm.popFrame()           // 回到父帧（类似函数调函数了 回到调用者）
-			vm.pop()                // 调用过的函数弹栈
+			returnValue := vm.pop()       // 函数返回值
+			frame := vm.popFrame()        // 回到父帧（类似函数调函数了 回到调用者）
+			vm.sp = frame.basePointer - 1 // 栈指针回到调用函数之前
 			err := vm.push(returnValue)
 			if err != nil {
 				return err
 			}
 		case code.OpReturn:
-			vm.popFrame()
-			vm.pop()
+			frame := vm.popFrame()
+			vm.sp = frame.basePointer - 1
 			err := vm.push(Null)
+			if err != nil {
+				return err
+			}
+		case code.OpSetLocal:
+			localIndex := code.ReadUint8(ins[ip+1:])
+			frame := vm.currentFrame()
+			frame.ip += 1
+			vm.stack[frame.basePointer+int(localIndex)] = vm.pop() // 填充局部数据到栈预留的数据槽中
+		case code.OpGetLocal:
+			localIndex := code.ReadUint8(ins[ip+1:])
+			frame := vm.currentFrame()
+			frame.ip += 1
+			err := vm.push(vm.stack[frame.basePointer+int(localIndex)])
 			if err != nil {
 				return err
 			}

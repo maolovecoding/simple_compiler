@@ -13,7 +13,7 @@ func New(bytecode *compiler.Bytecode) *VM {
 	mainFn := &object.CompiledFunction{
 		Instructions: bytecode.Instructions,
 	}
-	mainFrame := NewFrame(mainFn) // 主栈帧
+	mainFrame := NewFrame(mainFn, 0) // 主栈帧
 	frames := make([]*Frame, MaxFrames)
 	frames[0] = mainFrame
 	return &VM{
@@ -35,9 +35,10 @@ func NewWithGlobalsStore(bytecode *compiler.Bytecode, s []object.Object) *VM {
 }
 
 // NewFrame 创建一个新的帧
-func NewFrame(fn *object.CompiledFunction) *Frame {
+func NewFrame(fn *object.CompiledFunction, basePointer int) *Frame {
 	return &Frame{
-		fn: fn,
-		ip: -1,
+		fn:          fn,
+		ip:          -1,
+		basePointer: basePointer,
 	}
 }
