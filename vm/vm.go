@@ -11,11 +11,13 @@ const StackSize = 2048
 
 // VM 虚拟机
 type VM struct {
-	constants    []object.Object   // 常量池
-	instructions code.Instructions // 指令集
-	stack        []object.Object   // 虚拟栈
-	sp           int               // 栈指针 始终指向栈中的下一个空闲槽  栈顶的值是 stack[sp-1]
-	globals      []object.Object   // 全局变量
+	constants []object.Object // 常量池
+	//instructions code.Instructions // 指令集
+	stack       []object.Object // 虚拟栈
+	sp          int             // 栈指针 始终指向栈中的下一个空闲槽  栈顶的值是 stack[sp-1]
+	globals     []object.Object // 全局变量
+	frames      []*Frame        // 帧
+	framesIndex int
 }
 
 /*
@@ -23,15 +25,21 @@ Run 虚拟机的核心方法
 实现原理就是一个主循环， 取指-解码-执行-循环
 */
 func (vm *VM) Run() error {
+	var ip int
+	var ins code.Instructions
+	var op code.Opcode
 	// 循环
-	for ip := 0; ip < len(vm.instructions); ip++ {
+	for vm.currentFrame().ip < len(vm.currentFrame().Instructions())-1 {
+		vm.currentFrame().ip++
+		ip = vm.currentFrame().ip
+		ins = vm.currentFrame().Instructions()
 		// 取指 栈顶指令
-		op := code.Opcode(vm.instructions[ip]) // 把栈顶指令取出（字节） 转为操作码
+		op = code.Opcode(ins[ip]) // 把栈顶指令取出（字节） 转为操作码
 		// 解码
 		switch op {
 		case code.OpConstant:
-			constIndex := code.ReadUint16(vm.instructions[ip+1:]) // vm.instructions[ip+1:] 操作码后面就是操作数 操作数 2字节
-			ip += 2                                               // 指针加上操作数的宽度 下次循环进来指向下一个操作码
+			constIndex := code.ReadUint16(ins[ip+1:]) // vm.instructions[ip+1:] 操作码后面就是操作数 操作数 2字节
+			vm.currentFrame().ip += 2                 // 指针加上操作数的宽度 下次循环进来指向下一个操作码
 			err := vm.push(vm.constants[constIndex])
 			if err != nil {
 				return err
@@ -57,29 +65,29 @@ func (vm *VM) Run() error {
 				return nil
 			}
 		case code.OpJump:
-			pos := int(code.ReadUint16(vm.instructions[ip+1:])) // 读出操作数 就是地址
-			ip = pos - 1                                        // 程序计数器 也就是指针 直接去到要跳转的位置
+			pos := int(code.ReadUint16(ins[ip+1:])) // 读出操作数 就是地址
+			vm.currentFrame().ip = pos - 1          // 程序计数器 也就是指针 直接去到要跳转的位置
 		case code.OpJumpNotTruthy:
-			pos := int(code.ReadUint16(vm.instructions[ip+1:])) // 条件为假跳转的地址
-			ip += 2                                             // 跳过操作数 地址是两个字节 应该跳过去了
+			pos := int(code.ReadUint16(ins[ip+1:])) // 条件为假跳转的地址
+			vm.currentFrame().ip += 2               // 跳过操作数 地址是两个字节 应该跳过去了
 			condition := vm.pop()
 			if !isTruthy(condition) {
-				ip = pos - 1 // 循环 + 1了 这里就 -1 抵消
+				vm.currentFrame().ip = pos - 1 // 循环 + 1了 这里就 -1 抵消
 			}
 		case code.OpSetGlobal:
-			globalIndex := code.ReadUint16(vm.instructions[ip+1:])
-			ip += 2                            // 跳过操作数
+			globalIndex := code.ReadUint16(ins[ip+1:])
+			vm.currentFrame().ip += 2          // 跳过操作数
 			vm.globals[globalIndex] = vm.pop() // 变量绑定值
 		case code.OpGetGlobal:
-			globalIndex := code.ReadUint16(vm.instructions[ip+1:])
-			ip += 2
+			globalIndex := code.ReadUint16(ins[ip+1:])
+			vm.currentFrame().ip += 2
 			err := vm.push(vm.globals[globalIndex])
 			if err != nil {
 				return err
 			}
 		case code.OpArray:
-			numElements := int(code.ReadUint16(vm.instructions[ip+1:]))
-			ip += 2
+			numElements := int(code.ReadUint16(ins[ip+1:]))
+			vm.currentFrame().ip += 2
 			array := vm.buildArray(vm.sp-numElements, vm.sp) // 构建数组 栈中 sp-numElements到sp是数组元素
 			vm.sp = vm.sp - numElements                      // 元素全部被覆盖了 相当于弹栈了
 			err := vm.push(array)
@@ -87,8 +95,8 @@ func (vm *VM) Run() error {
 				return err
 			}
 		case code.OpHash:
-			numElements := int(code.ReadUint16(vm.instructions[ip+1:]))
-			ip += 2
+			numElements := int(code.ReadUint16(ins[ip+1:]))
+			vm.currentFrame().ip += 2
 			hash, err := vm.buildHash(vm.sp-numElements, vm.sp)
 			if err != nil {
 				return err
@@ -323,4 +331,18 @@ func (vm *VM) StackTop() object.Object {
 // 因为我们执行了 pop 已经弹栈了 但是我们栈没有清空 这里是为了验证栈顶元素的正确性
 func (vm *VM) LastPoppedStackElem() object.Object {
 	return vm.stack[vm.sp]
+}
+
+// currentFrame 当前的帧
+func (vm *VM) currentFrame() *Frame {
+	return vm.frames[vm.framesIndex-1]
+}
+func (vm *VM) pushFrame(f *Frame) {
+	vm.frames[vm.framesIndex] = f
+	vm.framesIndex++
+}
+
+func (vm *VM) popFrame() *Frame {
+	vm.framesIndex--
+	return vm.frames[vm.framesIndex]
 }
