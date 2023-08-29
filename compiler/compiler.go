@@ -203,7 +203,11 @@ func (c *Compiler) Compile(node ast.Node) error {
 		}
 		numLocals := c.symbolTable.numDefinitions // 定义的局部变量/绑定的个数
 		instructions := c.leaveScope()            // 函数作用域下生成的指令集
-		compiledFn := &object.CompiledFunction{Instructions: instructions, NumLocals: numLocals}
+		compiledFn := &object.CompiledFunction{
+			Instructions:  instructions,
+			NumLocals:     numLocals,
+			NumParameters: len(node.Parameters),
+		}
 		c.emit(code.OpConstant, c.addConstant(compiledFn)) // 编译函数字面量 添加到常量池
 	case *ast.ReturnStatement:
 		err := c.Compile(node.ReturnValue)
