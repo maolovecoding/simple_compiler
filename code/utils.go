@@ -30,7 +30,7 @@ var definitions = map[Opcode]*Definition{
 	OpArray:         {"OpArray", []int{2}},         // 操作数是数组元素个数
 	OpHash:          {"OpHash", []int{2}},          // 操作数是hash键值对个数 * 2
 	OpIndex:         {"OpIndex", []int{}},
-	OpCall:          {"OpCall", []int{}},        // 函数调用指令 执行栈顶的函数
+	OpCall:          {"OpCall", []int{1}},       // 函数调用指令 执行栈顶的函数 操作码是参数的个数
 	OpReturnValue:   {"OpReturnValue", []int{}}, // 函数调用有返回值指令 + OpReturn 指令的能力
 	OpReturn:        {"OpReturn", []int{}},      // 函数调用无返回值 为了回到调用函数的位置
 	OpGetLocal:      {"OpGetLocal", []int{1}},   // 获取局部绑定的变量 操作数（地址）用1字节即可 256个局部变量够用了
