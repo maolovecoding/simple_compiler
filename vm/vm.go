@@ -147,7 +147,7 @@ func (vm *VM) Run() error {
 			localIndex := code.ReadUint8(ins[ip+1:])
 			frame := vm.currentFrame()
 			frame.ip += 1
-			vm.stack[frame.basePointer+int(localIndex)] = vm.pop() // 填充局部数据到栈预留的数据槽中
+			vm.stack[frame.basePointer+int(localIndex)] = vm.pop() // 填充局部数据到栈预留的数据槽中 basePointer, numLocals
 		case code.OpGetLocal:
 			localIndex := code.ReadUint8(ins[ip+1:])
 			frame := vm.currentFrame()
@@ -398,6 +398,8 @@ func (vm *VM) callFunction(fn *object.CompiledFunction, numArgs int) error {
 	}
 	frame := NewFrame(fn, vm.sp-numArgs)
 	vm.pushFrame(frame)
+	// 从 vm.sp-numArgs+fn.NumLocals 开始 到 vm.sp + fn.NumLocals 这之间的空缺是给函数传的参数内容
+	// 从 vm.sp 到 vm.sp + fn.NumLocals-numArgs 之间的内容是预留给函数的局部变量的
 	vm.sp = frame.basePointer + fn.NumLocals // 创造 “空缺” 预留局部变量个数的位置 在函数调用时将创建的局部变量填充在这里 压栈 & 弹栈
 	return nil
 }
