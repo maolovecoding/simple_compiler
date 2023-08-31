@@ -12,12 +12,16 @@ func New() *Compiler {
 		lastInstruction:     EmittedInstruction{},
 		previousInstruction: EmittedInstruction{},
 	}
+	symbolTable := NewSymbolTable()
+	for i, v := range object.Builtins {
+		symbolTable.DefineBuiltin(i, v.Name) // 定义内置函数
+	}
 	return &Compiler{
 		//instructions:        code.Instructions{},
 		constants: []object.Object{},
 		//lastInstruction:     EmittedInstruction{},
 		//previousInstruction: EmittedInstruction{},
-		symbolTable: NewSymbolTable(),
+		symbolTable: symbolTable,
 		scopes:      []CompilationScope{mainScope},
 		scopeIndex:  0,
 	}

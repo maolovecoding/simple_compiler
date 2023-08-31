@@ -35,6 +35,7 @@ var definitions = map[Opcode]*Definition{
 	OpReturn:        {"OpReturn", []int{}},      // 函数调用无返回值 为了回到调用函数的位置
 	OpGetLocal:      {"OpGetLocal", []int{1}},   // 获取局部绑定的变量 操作数（地址）用1字节即可 256个局部变量够用了
 	OpSetLocal:      {"OpSetLocal", []int{1}},   // 设置
+	OpGetBuiltin:    {"OpGetBuiltin", []int{1}}, // 获取内置函数操作码
 }
 
 func Lookup(op byte) (*Definition, error) {

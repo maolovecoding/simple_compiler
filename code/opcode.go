@@ -30,4 +30,5 @@ const (
 	OpReturn                      // 函数调用无返回值 回到调用这个函数之前的逻辑
 	OpGetLocal                    // 获取局部绑定变量
 	OpSetLocal                    // 设置局部绑定变量
+	OpGetBuiltin                  // 获取内置函数操作码
 )

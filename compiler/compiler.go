@@ -232,11 +232,7 @@ func (c *Compiler) Compile(node ast.Node) error {
 		if !ok {
 			return fmt.Errorf("undefined varible %s", node.Value) // 变量未定义 编译报错（非运行时错误）
 		}
-		if symbol.Scope == GlobalScope {
-			c.emit(code.OpGetGlobal, symbol.Index)
-		} else {
-			c.emit(code.OpGetLocal, symbol.Index)
-		}
+		c.loadSymbol(symbol)
 	case *ast.StringLiteral:
 		str := &object.String{Value: node.Value}
 		c.emit(code.OpConstant, c.addConstant(str))
@@ -371,4 +367,16 @@ func (c *Compiler) replaceLastPopWithReturn() {
 	lastPos := c.scopes[c.scopeIndex].lastInstruction.Position
 	c.replaceInstruction(lastPos, code.Make(code.OpReturnValue))       // 只有操作码
 	c.scopes[c.scopeIndex].lastInstruction.Opcode = code.OpReturnValue // 替换操作码
+}
+
+// 根据符号作用域 发出相关指令
+func (c *Compiler) loadSymbol(s Symbol) {
+	switch s.Scope {
+	case GlobalScope:
+		c.emit(code.OpGetGlobal, s.Index)
+	case LocalScope:
+		c.emit(code.OpGetLocal, s.Index)
+	case BuiltinScope:
+		c.emit(code.OpGetBuiltin, s.Index)
+	}
 }

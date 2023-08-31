@@ -5,8 +5,9 @@ package compiler
 type SymbolScope string // 作用域
 
 const (
-	GlobalScope SymbolScope = "GLOBAL"
-	LocalScope  SymbolScope = "LOCAL"
+	GlobalScope  SymbolScope = "GLOBAL"
+	LocalScope   SymbolScope = "LOCAL"
+	BuiltinScope SymbolScope = "BUILTIN"
 )
 
 // Symbol 符号 标识
@@ -55,4 +56,11 @@ func (s *SymbolTable) Resolve(name string) (Symbol, bool) {
 		return s.Outer.Resolve(name)
 	}
 	return obj, ok
+}
+
+// DefineBuiltin 定义内置函数符号 在 index 位置定义
+func (s *SymbolTable) DefineBuiltin(index int, name string) Symbol {
+	symbol := Symbol{Name: name, Index: index, Scope: BuiltinScope}
+	s.store[name] = symbol
+	return symbol
 }
