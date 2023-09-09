@@ -44,6 +44,14 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return err
 			}
+		case code.OpClosure:
+			constIndex := code.ReadUint16(ins[ip+1:]) // 第一个操作数就是 编译函数 2字节大小
+			_ = code.ReadUint8(ins[ip+3:])
+			vm.currentFrame().ip += 3
+			err := vm.pushClosure(int(constIndex))
+			if err != nil {
+				return err
+			}
 		case code.OpAdd, code.OpSub, code.OpMul, code.OpDiv: // 1 + 2
 			err := vm.executeBinaryOperation(op)
 			if err != nil {
@@ -391,16 +399,30 @@ func (vm *VM) popFrame() *Frame {
 }
 
 // callFunction 执行自定义函数
-func (vm *VM) callFunction(fn *object.CompiledFunction, numArgs int) error {
+//func (vm *VM) callFunction(fn *object.CompiledFunction, numArgs int) error {
+//	// 确保参数个数 和 调用时传参的个数相等
+//	if numArgs != fn.NumParameters {
+//		return fmt.Errorf("wrong number of arguments: want=%d, got=%d", fn.NumParameters, numArgs)
+//	}
+//	frame := NewFrame(fn, vm.sp-numArgs)
+//	vm.pushFrame(frame)
+//	// 从 vm.sp-numArgs+fn.NumLocals 开始 到 vm.sp + fn.NumLocals 这之间的空缺是给函数传的参数内容
+//	// 从 vm.sp 到 vm.sp + fn.NumLocals-numArgs 之间的内容是预留给函数的局部变量的
+//	vm.sp = frame.basePointer + fn.NumLocals // 创造 “空缺” 预留局部变量个数的位置 在函数调用时将创建的局部变量填充在这里 压栈 & 弹栈
+//	return nil
+//}
+
+// callClosure 闭包函数
+func (vm *VM) callClosure(cl *object.Closure, numArgs int) error {
 	// 确保参数个数 和 调用时传参的个数相等
-	if numArgs != fn.NumParameters {
-		return fmt.Errorf("wrong number of arguments: want=%d, got=%d", fn.NumParameters, numArgs)
+	if numArgs != cl.Fn.NumParameters {
+		return fmt.Errorf("wrong number of arguments: want=%d, got=%d", cl.Fn.NumParameters, numArgs)
 	}
-	frame := NewFrame(fn, vm.sp-numArgs)
+	frame := NewFrame(cl, vm.sp-numArgs)
 	vm.pushFrame(frame)
 	// 从 vm.sp-numArgs+fn.NumLocals 开始 到 vm.sp + fn.NumLocals 这之间的空缺是给函数传的参数内容
 	// 从 vm.sp 到 vm.sp + fn.NumLocals-numArgs 之间的内容是预留给函数的局部变量的
-	vm.sp = frame.basePointer + fn.NumLocals // 创造 “空缺” 预留局部变量个数的位置 在函数调用时将创建的局部变量填充在这里 压栈 & 弹栈
+	vm.sp = frame.basePointer + cl.Fn.NumLocals // 创造 “空缺” 预留局部变量个数的位置 在函数调用时将创建的局部变量填充在这里 压栈 & 弹栈
 	return nil
 }
 
@@ -408,8 +430,8 @@ func (vm *VM) callFunction(fn *object.CompiledFunction, numArgs int) error {
 func (vm *VM) executeCall(numArgs int) error {
 	callee := vm.stack[vm.sp-1-numArgs]
 	switch callee := callee.(type) {
-	case *object.CompiledFunction: // 自定义函数
-		return vm.callFunction(callee, numArgs)
+	case *object.Closure: // 自定义函数
+		return vm.callClosure(callee, numArgs)
 	case *object.Builtin: // 内置函数
 		return vm.callBuiltin(callee, numArgs)
 	default:
@@ -427,4 +449,15 @@ func (vm *VM) callBuiltin(builtin *object.Builtin, numArgs int) error {
 	} else {
 		return vm.push(Null)
 	}
+}
+
+// pushClosure 压栈闭包函数
+func (vm *VM) pushClosure(constIndex int) error {
+	constant := vm.constants[constIndex]
+	function, ok := constant.(*object.CompiledFunction)
+	if !ok {
+		return fmt.Errorf("not a function: %+v", constant)
+	}
+	closure := &object.Closure{Fn: function}
+	return vm.push(closure)
 }

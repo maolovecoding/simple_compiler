@@ -31,4 +31,5 @@ const (
 	OpGetLocal                    // 获取局部绑定变量
 	OpSetLocal                    // 设置局部绑定变量
 	OpGetBuiltin                  // 获取内置函数操作码
+	OpClosure                     // 创建闭包
 )

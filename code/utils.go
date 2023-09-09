@@ -36,6 +36,7 @@ var definitions = map[Opcode]*Definition{
 	OpGetLocal:      {"OpGetLocal", []int{1}},   // 获取局部绑定的变量 操作数（地址）用1字节即可 256个局部变量够用了
 	OpSetLocal:      {"OpSetLocal", []int{1}},   // 设置
 	OpGetBuiltin:    {"OpGetBuiltin", []int{1}}, // 获取内置函数操作码
+	OpClosure:       {"OpClosure", []int{2, 1}}, // 创建闭包 两个操作数 第一个是常量索引 去常量池找到需要转换为闭包的编译函数 第二个是栈有多少自由变量需要转移到即将创建的闭包中
 }
 
 func Lookup(op byte) (*Definition, error) {

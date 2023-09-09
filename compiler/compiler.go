@@ -208,7 +208,8 @@ func (c *Compiler) Compile(node ast.Node) error {
 			NumLocals:     numLocals,
 			NumParameters: len(node.Parameters),
 		}
-		c.emit(code.OpConstant, c.addConstant(compiledFn)) // 编译函数字面量 添加到常量池
+		fnIndex := c.addConstant(compiledFn) // 编译函数字面量 添加到常量池
+		c.emit(code.OpClosure, fnIndex, 0)   // 形成闭包
 	case *ast.ReturnStatement:
 		err := c.Compile(node.ReturnValue)
 		if err != nil {
