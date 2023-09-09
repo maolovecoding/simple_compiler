@@ -5,10 +5,11 @@ package compiler
 type SymbolScope string // 作用域
 
 const (
-	GlobalScope  SymbolScope = "GLOBAL"
-	LocalScope   SymbolScope = "LOCAL"
-	BuiltinScope SymbolScope = "BUILTIN"
-	FreeScope    SymbolScope = "FREE"
+	GlobalScope   SymbolScope = "GLOBAL"
+	LocalScope    SymbolScope = "LOCAL"
+	BuiltinScope  SymbolScope = "BUILTIN"
+	FreeScope     SymbolScope = "FREE"
+	FunctionScope SymbolScope = "FUNCTION" // 当对一个名称进行语法分析并使用FunctionScope返回一个符号时，我们就知道它是当前的函数名，因此它是自引用。
 )
 
 // Symbol 符号 标识
@@ -40,7 +41,11 @@ func NewEnclosedSymbolTable(outer *SymbolTable) *SymbolTable {
 
 // Define 在作用域定义一个变量 并更新其在符号表中的地址
 func (s *SymbolTable) Define(name string) Symbol {
-	symbol := Symbol{Name: name, Index: s.numDefinitions}
+	symbol, ok := s.store[name]
+	if ok {
+		return symbol
+	}
+	symbol = Symbol{Name: name, Index: s.numDefinitions}
 	if s.Outer == nil { // 全局的
 		symbol.Scope = GlobalScope
 	} else {
@@ -86,5 +91,12 @@ func (s *SymbolTable) defineFree(original Symbol) Symbol {
 	}
 	symbol.Scope = FreeScope
 	s.store[original.Name] = symbol
+	return symbol
+}
+
+// DefineFunctionName 定义函数名 函数引用自身
+func (s *SymbolTable) DefineFunctionName(name string) Symbol {
+	symbol := Symbol{Name: name, Scope: FunctionScope, Index: 0}
+	s.store[name] = symbol
 	return symbol
 }

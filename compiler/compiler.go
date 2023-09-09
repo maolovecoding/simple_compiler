@@ -137,11 +137,11 @@ func (c *Compiler) Compile(node ast.Node) error {
 			}
 		}
 	case *ast.LetStatement:
+		symbol := c.symbolTable.Define(node.Name.Value) // 编译函数前 定义标识 函数可以引用自身 递归了！
 		err := c.Compile(node.Value)
 		if err != nil {
 			return err
 		}
-		symbol := c.symbolTable.Define(node.Name.Value) // 定义标识
 		if symbol.Scope == GlobalScope {
 			c.emit(code.OpSetGlobal, symbol.Index) // 设值 栈顶的值设置到该操作数（在符号表中的地址）
 		} else {
@@ -187,6 +187,9 @@ func (c *Compiler) Compile(node ast.Node) error {
 		c.emit(code.OpIndex)
 	case *ast.FunctionLiteral:
 		c.enterScope() // 进入新的编译作用域 函数指令在这个作用域下生成
+		if node.Name != "" {
+			c.symbolTable.DefineFunctionName(node.Name) // 定义函数符号
+		}
 		for _, param := range node.Parameters {
 			c.symbolTable.Define(param.Value) // 定义参数也为局部变量
 		}
@@ -385,5 +388,7 @@ func (c *Compiler) loadSymbol(s Symbol) {
 		c.emit(code.OpGetBuiltin, s.Index)
 	case FreeScope:
 		c.emit(code.OpGetFree, s.Index)
+	case FunctionScope:
+		c.emit(code.OpCurrentClosure)
 	}
 }
