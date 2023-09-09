@@ -8,6 +8,7 @@ const (
 	GlobalScope  SymbolScope = "GLOBAL"
 	LocalScope   SymbolScope = "LOCAL"
 	BuiltinScope SymbolScope = "BUILTIN"
+	FreeScope    SymbolScope = "FREE"
 )
 
 // Symbol 符号 标识
@@ -21,6 +22,7 @@ type SymbolTable struct {
 	Outer          *SymbolTable // 父级符号表
 	store          map[string]Symbol
 	numDefinitions int
+	FreeSymbols    []Symbol
 }
 
 // NewSymbolTable 创建符号表
@@ -53,7 +55,17 @@ func (s *SymbolTable) Define(name string) Symbol {
 func (s *SymbolTable) Resolve(name string) (Symbol, bool) {
 	obj, ok := s.store[name]
 	if !ok && s.Outer != nil {
-		return s.Outer.Resolve(name)
+		obj, ok = s.Outer.Resolve(name)
+		if !ok {
+			return obj, ok // 没找到
+		}
+		// 找到了 是内置或者全部变量符号
+		if obj.Scope == GlobalScope || obj.Scope == BuiltinScope {
+			return obj, ok
+		}
+		// 是局部变量 -> 都可以认为是自由变量(函数内用的变量不是自己定义的)
+		free := s.defineFree(obj)
+		return free, true // 返回自由变量 作用域是free
 	}
 	return obj, ok
 }
@@ -62,5 +74,17 @@ func (s *SymbolTable) Resolve(name string) (Symbol, bool) {
 func (s *SymbolTable) DefineBuiltin(index int, name string) Symbol {
 	symbol := Symbol{Name: name, Index: index, Scope: BuiltinScope}
 	s.store[name] = symbol
+	return symbol
+}
+
+// 定义free变量
+func (s *SymbolTable) defineFree(original Symbol) Symbol {
+	s.FreeSymbols = append(s.FreeSymbols, original)
+	symbol := Symbol{
+		Name:  original.Name,
+		Index: len(s.FreeSymbols) - 1,
+	}
+	symbol.Scope = FreeScope
+	s.store[original.Name] = symbol
 	return symbol
 }

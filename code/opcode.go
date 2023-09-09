@@ -32,4 +32,5 @@ const (
 	OpSetLocal                    // 设置局部绑定变量
 	OpGetBuiltin                  // 获取内置函数操作码
 	OpClosure                     // 创建闭包
+	OpGetFree                     // 检索自由变量
 )

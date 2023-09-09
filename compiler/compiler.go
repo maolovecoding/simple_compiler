@@ -201,15 +201,19 @@ func (c *Compiler) Compile(node ast.Node) error {
 			// 空函数体 fn () {} & 不能转换为该语句的情况 比如 let name = "zs";
 			c.emit(code.OpReturn)
 		}
+		freeSymbols := c.symbolTable.FreeSymbols  // 自由变量
 		numLocals := c.symbolTable.numDefinitions // 定义的局部变量/绑定的个数
 		instructions := c.leaveScope()            // 函数作用域下生成的指令集
+		for _, s := range freeSymbols {
+			c.loadSymbol(s)
+		}
 		compiledFn := &object.CompiledFunction{
 			Instructions:  instructions,
 			NumLocals:     numLocals,
 			NumParameters: len(node.Parameters),
 		}
-		fnIndex := c.addConstant(compiledFn) // 编译函数字面量 添加到常量池
-		c.emit(code.OpClosure, fnIndex, 0)   // 形成闭包
+		fnIndex := c.addConstant(compiledFn)              // 编译函数字面量 添加到常量池
+		c.emit(code.OpClosure, fnIndex, len(freeSymbols)) // 形成闭包 fnIndex 是编译函数  len是自由变量个数
 	case *ast.ReturnStatement:
 		err := c.Compile(node.ReturnValue)
 		if err != nil {
@@ -379,5 +383,7 @@ func (c *Compiler) loadSymbol(s Symbol) {
 		c.emit(code.OpGetLocal, s.Index)
 	case BuiltinScope:
 		c.emit(code.OpGetBuiltin, s.Index)
+	case FreeScope:
+		c.emit(code.OpGetFree, s.Index)
 	}
 }
